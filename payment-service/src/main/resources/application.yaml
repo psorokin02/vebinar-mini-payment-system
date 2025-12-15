@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: vebinar-payment-system
+
+  devtools:
+    restart:
+      enabled: true
+
