@@ -33,7 +33,7 @@ public class PaymentEventPublisher {
     }
 
     public void publishPaymentSucceeded(PaymentEntity payment) {
-        publish(payment, PaymentEventType.PAYMENT_CREATED);
+        publish(payment, PaymentEventType.PAYMENT_SUCCEEDED);
     }
 
     private void publish(
@@ -49,6 +49,7 @@ public class PaymentEventPublisher {
                 payment.getUserId(),
                 payment.getStatus().name()
         );
+        kafkaTemplate.send(topic, payment.getId().toString(), event);
         kafkaTemplate.send(topic, payment.getId().toString(), event);
         logger.info("Published event {} for payment {}", type, payment.getId());
     }

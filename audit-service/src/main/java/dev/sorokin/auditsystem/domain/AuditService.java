@@ -3,9 +3,12 @@ package dev.sorokin.auditsystem.domain;
 import dev.sorokin.auditsystem.api.PaymentAuditDto;
 import dev.sorokin.auditsystem.domain.db.PaymentAuditLogEntity;
 import dev.sorokin.auditsystem.domain.db.PaymentAuditLogRepository;
+import dev.sorokin.auditsystem.domain.db.ProcessedEventEntity;
+import dev.sorokin.auditsystem.domain.db.ProcessedEventRepository;
 import dev.sorokin.common.events.PaymentEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,17 +20,33 @@ public class AuditService {
     private static final Logger logger = LoggerFactory.getLogger(AuditService.class);
 
     private final PaymentAuditLogRepository auditLogRepository;
+    private final ProcessedEventRepository processedEventRepository;
 
-    public AuditService(PaymentAuditLogRepository auditLogRepository) {
+    public AuditService(
+            PaymentAuditLogRepository auditLogRepository,
+            ProcessedEventRepository processedEventRepository
+    ) {
         this.auditLogRepository = auditLogRepository;
+        this.processedEventRepository = processedEventRepository;
     }
 
     @Transactional
     public void processEvent(PaymentEvent event) {
-        // TODO: проверить на дубликаты
+        var isEventAlreadyProcessed = checkIsEventProcessed(event);
+
+        if (isEventAlreadyProcessed) {
+            logger.info("Event already processed, skipping");
+            return;
+        }
+
         PaymentAuditLogEntity logEntry = convertEventToLogEntity(event);
         auditLogRepository.save(logEntry);
         logger.info("Stored audit log for payment {}", event.paymentId());
+    }
+
+    private boolean checkIsEventProcessed(PaymentEvent event) {
+        int insertedCount = processedEventRepository.insertIfNotExists(event.eventId());
+        return insertedCount == 0;
     }
 
     @Transactional(readOnly = true)
