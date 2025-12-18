@@ -20,7 +20,7 @@ import java.util.UUID;
 public class ProcessedEventEntity {
 
     @Id
-    @Column(name = "event_id")
+    @Column(name = "id")
     private UUID eventId;
 
     @CreationTimestamp

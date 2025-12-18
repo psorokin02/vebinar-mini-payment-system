@@ -33,7 +33,7 @@ public class PaymentEventPublisher {
     }
 
     public void publishPaymentSucceeded(PaymentEntity payment) {
-        publish(payment, PaymentEventType.PAYMENT_CREATED);
+        publish(payment, PaymentEventType.PAYMENT_SUCCEEDED);
     }
 
     private void publish(
