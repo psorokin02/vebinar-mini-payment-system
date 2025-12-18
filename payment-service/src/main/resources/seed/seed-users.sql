@@ -1,4 +1,3 @@
-INSERT INTO users (email) VALUES ('Ivan01@example.com');
 INSERT INTO users (email) VALUES ('Sergey02@example.com');
 INSERT INTO users (email) VALUES ('Alexey03@example.com');
 INSERT INTO users (email) VALUES ('Dmitry04@example.com');

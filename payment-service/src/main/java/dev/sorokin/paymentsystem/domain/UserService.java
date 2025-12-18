@@ -47,8 +47,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public List<UserDto> getAllUsers() {
-        // TODO: решить проблему N+1 запроса
-        return userRepository.findAll().stream()
+        return userRepository.findAllWithUsers().stream()
                 .map(this::toResponse)
                 .toList();
     }
