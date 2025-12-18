@@ -7,6 +7,8 @@ import dev.sorokin.paymentsystem.domain.db.PaymentRepository;
 import dev.sorokin.paymentsystem.domain.db.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,15 +25,18 @@ public class PaymentService {
     private final PaymentEntityMapper mapper;
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
+    private final RedisTemplate<String, PaymentDto> redisTemplate;
 
     public PaymentService(
             PaymentEntityMapper mapper,
             PaymentRepository paymentRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            RedisTemplate<String, PaymentDto> redisTemplate
     ) {
         this.mapper = mapper;
         this.paymentRepository = paymentRepository;
         this.userRepository = userRepository;
+        this.redisTemplate = redisTemplate;
     }
 
     @Transactional
@@ -46,12 +51,20 @@ public class PaymentService {
         PaymentEntity payment = new PaymentEntity(request.userId(), request.amount(), PaymentStatus.NEW);
         PaymentEntity saved = paymentRepository.save(payment);
         log.info("Payment created: id={}", saved.getId());
+
         return mapper.convertEntityToDto(saved);
     }
 
     public PaymentDto getPayment(Long id) {
+        var foundInCache = redisTemplate.opsForValue().get(id.toString());
+        if (foundInCache != null) {
+            log.info("Payment found in cache: id={}", foundInCache.id());
+            return foundInCache;
+        }
         PaymentEntity payment = findPaymentOrThrow(id);
-        return mapper.convertEntityToDto(payment);
+        var paymentDto = mapper.convertEntityToDto(payment);
+        redisTemplate.opsForValue().set(id.toString(), paymentDto);
+        return paymentDto;
     }
 
     @Transactional
@@ -63,6 +76,7 @@ public class PaymentService {
         payment.setStatus(PaymentStatus.SUCCEEDED);
         PaymentEntity saved = paymentRepository.save(payment);
         log.info("Payment has been confirmed: id={}", id);
+        // TODO: удаление из кэша
         return mapper.convertEntityToDto(saved);
     }
 
