@@ -8,6 +8,7 @@ import dev.sorokin.paymentsystem.domain.db.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -55,18 +56,13 @@ public class PaymentService {
         return mapper.convertEntityToDto(saved);
     }
 
+    @Cacheable(cacheNames = "payments", key = "#id")
     public PaymentDto getPayment(Long id) {
-        var foundInCache = redisTemplate.opsForValue().get(id.toString());
-        if (foundInCache != null) {
-            log.info("Payment found in cache: id={}", foundInCache.id());
-            return foundInCache;
-        }
         PaymentEntity payment = findPaymentOrThrow(id);
-        var paymentDto = mapper.convertEntityToDto(payment);
-        redisTemplate.opsForValue().set(id.toString(), paymentDto);
-        return paymentDto;
+        return mapper.convertEntityToDto(payment);
     }
 
+    @CacheEvict(cacheNames = "payments", key = "#id")
     @Transactional
     public PaymentDto confirmPayment(Long id) {
         PaymentEntity payment = findPaymentOrThrow(id);
@@ -76,9 +72,34 @@ public class PaymentService {
         payment.setStatus(PaymentStatus.SUCCEEDED);
         PaymentEntity saved = paymentRepository.save(payment);
         log.info("Payment has been confirmed: id={}", id);
-        // TODO: удаление из кэша
         return mapper.convertEntityToDto(saved);
     }
+
+//    public PaymentDto getPayment(Long id) {
+//        var foundInCache = redisTemplate.opsForValue().get(id.toString());
+//        if (foundInCache != null) {
+//            log.info("Payment found in cache: id={}", foundInCache.id());
+//            return foundInCache;
+//        }
+//        PaymentEntity payment = findPaymentOrThrow(id);
+//        var paymentDto = mapper.convertEntityToDto(payment);
+//        redisTemplate.opsForValue().set(id.toString(), paymentDto);
+//        return paymentDto;
+//    }
+//
+//    @Transactional
+//    public PaymentDto confirmPayment(Long id) {
+//        PaymentEntity payment = findPaymentOrThrow(id);
+//        if (!payment.getStatus().equals(PaymentStatus.NEW)) {
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Payment status must be NEW");
+//        }
+//        payment.setStatus(PaymentStatus.SUCCEEDED);
+//        PaymentEntity saved = paymentRepository.save(payment);
+//        log.info("Payment has been confirmed: id={}", id);
+//        redisTemplate.delete(id.toString());
+//        log.info("Payment has been removed from cache: id={}", id);
+//        return mapper.convertEntityToDto(saved);
+//    }
 
     private PaymentEntity findPaymentOrThrow(Long id) {
         return paymentRepository.findById(id)

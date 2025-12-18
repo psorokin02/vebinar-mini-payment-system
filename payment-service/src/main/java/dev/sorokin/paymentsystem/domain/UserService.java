@@ -47,7 +47,6 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public List<UserDto> getAllUsers() {
-        // TODO: решить проблему N+1 запроса
         return userRepository.getAllWithPayments().stream()
                 .map(this::toResponse)
                 .toList();
