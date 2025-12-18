@@ -75,7 +75,7 @@ public class PaymentService {
         PaymentEntity saved = paymentRepository.save(payment);
         log.info("Payment has been confirmed: id={}", id);
 
-        // TODO: отправить событие в kafka
+        eventPublisher.publishPaymentSucceeded(saved);
 
         return mapper.convertEntityToDto(saved);
     }
