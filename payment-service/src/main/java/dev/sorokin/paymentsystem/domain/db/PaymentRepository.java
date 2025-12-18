@@ -1,4 +1,4 @@
-package dev.sorokin.paymentsystem.domain;
+package dev.sorokin.paymentsystem.domain.db;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

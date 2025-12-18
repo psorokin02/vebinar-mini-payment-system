@@ -2,6 +2,8 @@ package dev.sorokin.paymentsystem.domain;
 
 import dev.sorokin.paymentsystem.api.dto.CreatePaymentRequest;
 import dev.sorokin.paymentsystem.api.dto.PaymentDto;
+import dev.sorokin.paymentsystem.domain.db.PaymentEntity;
+import dev.sorokin.paymentsystem.domain.db.PaymentRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -17,26 +19,32 @@ public class PaymentService {
     private static final Logger log = LoggerFactory.getLogger(PaymentService.class);
     private static final BigDecimal MAX_AMOUNT = new BigDecimal("10000.00");
 
+    private final PaymentEntityMapper mapper;
     private final PaymentRepository paymentRepository;
 
-    public PaymentService(PaymentRepository paymentRepository) {
+    public PaymentService(
+            PaymentEntityMapper mapper,
+            PaymentRepository paymentRepository) {
+        this.mapper = mapper;
         this.paymentRepository = paymentRepository;
     }
 
     @Transactional
     public PaymentDto createPayment(CreatePaymentRequest request) {
+        // TODO: добавить проверку существования пользователя
+
         if (request.amount().compareTo(MAX_AMOUNT) > 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Amount too large");
         }
         PaymentEntity payment = new PaymentEntity(request.userId(), request.amount(), PaymentStatus.NEW);
         PaymentEntity saved = paymentRepository.save(payment);
         log.info("Payment created: id={}", saved.getId());
-        return convertEntityToDto(saved);
+        return mapper.convertEntityToDto(saved);
     }
 
     public PaymentDto getPayment(Long id) {
         PaymentEntity payment = findPaymentOrThrow(id);
-        return convertEntityToDto(payment);
+        return mapper.convertEntityToDto(payment);
     }
 
     @Transactional
@@ -48,22 +56,11 @@ public class PaymentService {
         payment.setStatus(PaymentStatus.SUCCEEDED);
         PaymentEntity saved = paymentRepository.save(payment);
         log.info("Payment has been confirmed: id={}", id);
-        return convertEntityToDto(saved);
+        return mapper.convertEntityToDto(saved);
     }
 
     private PaymentEntity findPaymentOrThrow(Long id) {
         return paymentRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment with id=" + id + " not found"));
-    }
-
-    private PaymentDto convertEntityToDto(PaymentEntity payment) {
-        return new PaymentDto(
-                payment.getId(),
-                payment.getUserId(),
-                payment.getAmount(),
-                payment.getStatus().name(),
-                payment.getCreatedAt(),
-                payment.getUpdatedAt()
-        );
     }
 }

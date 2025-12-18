@@ -1,5 +1,6 @@
-package dev.sorokin.paymentsystem.domain;
+package dev.sorokin.paymentsystem.domain.db;
 
+import dev.sorokin.paymentsystem.domain.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
