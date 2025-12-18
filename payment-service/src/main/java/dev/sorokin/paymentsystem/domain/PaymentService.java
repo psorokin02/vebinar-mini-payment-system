@@ -4,6 +4,7 @@ import dev.sorokin.paymentsystem.api.dto.CreatePaymentRequest;
 import dev.sorokin.paymentsystem.api.dto.PaymentDto;
 import dev.sorokin.paymentsystem.domain.db.PaymentEntity;
 import dev.sorokin.paymentsystem.domain.db.PaymentRepository;
+import dev.sorokin.paymentsystem.domain.db.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -21,17 +22,23 @@ public class PaymentService {
 
     private final PaymentEntityMapper mapper;
     private final PaymentRepository paymentRepository;
+    private final UserRepository userRepository;
 
     public PaymentService(
             PaymentEntityMapper mapper,
-            PaymentRepository paymentRepository) {
+            PaymentRepository paymentRepository,
+            UserRepository userRepository
+    ) {
         this.mapper = mapper;
         this.paymentRepository = paymentRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional
     public PaymentDto createPayment(CreatePaymentRequest request) {
-        // TODO: добавить проверку существования пользователя
+        if (!userRepository.existsById(request.userId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User not found id = " + request.userId());
+        }
 
         if (request.amount().compareTo(MAX_AMOUNT) > 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Amount too large");
