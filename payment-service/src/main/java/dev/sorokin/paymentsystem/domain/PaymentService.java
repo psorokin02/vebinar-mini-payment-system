@@ -8,6 +8,7 @@ import dev.sorokin.paymentsystem.domain.db.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -56,7 +57,7 @@ public class PaymentService {
     }
 
     public PaymentDto getPayment(Long id) {
-        var foundInCache = redisTemplate.opsForValue().get(id.toString());
+        PaymentDto foundInCache = redisTemplate.opsForValue().get(id.toString());
         if (foundInCache != null) {
             log.info("Payment found in cache: id={}", foundInCache.id());
             return foundInCache;
@@ -76,7 +77,7 @@ public class PaymentService {
         payment.setStatus(PaymentStatus.SUCCEEDED);
         PaymentEntity saved = paymentRepository.save(payment);
         log.info("Payment has been confirmed: id={}", id);
-        // TODO: удаление из кэша
+        redisTemplate.delete(id.toString());
         return mapper.convertEntityToDto(saved);
     }
 
