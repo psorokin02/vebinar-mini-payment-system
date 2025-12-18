@@ -56,7 +56,7 @@ public class PaymentService {
                 payment.getId(),
                 payment.getUserId(),
                 payment.getAmount(),
-                payment.getStatus().name(),
+                payment.getStatus(),
                 payment.getCreatedAt(),
                 payment.getUpdatedAt()
         );
