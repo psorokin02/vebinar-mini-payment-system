@@ -9,13 +9,8 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: orders
-    healthcheck:
-      test: pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB
-      interval: 10s
-      timeout: 5s
-      start_period: 10s
-      retries: 5
+      POSTGRES_DB: payments
+
   kafka:
     image: confluentinc/cp-kafka:8.1.1
     restart: unless-stopped
@@ -35,26 +30,12 @@ services:
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://kafka:9093
-    healthcheck:
-      test: kafka-topics --bootstrap-server localhost:9092 --list
-      interval: 10s
-      timeout: 5s
-      start_period: 30s
-      retries: 5
-    labels:
-      amplicode.image: confluent/kafka
 
   redis:
     image: redis:8.4.0
     restart: unless-stopped
     ports:
       - "6379:6379"
-    healthcheck:
-      test: redis-cli ping
-      interval: 10s
-      timeout: 5s
-      start_period: 10s
-      retries: 5
 
 volumes:
   postgres_data:

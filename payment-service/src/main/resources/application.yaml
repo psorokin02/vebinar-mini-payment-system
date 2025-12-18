@@ -1,3 +1,6 @@
+server:
+  port: 8080
+
 spring:
   application:
     name: vebinar-payment-system
@@ -6,3 +9,18 @@ spring:
     restart:
       enabled: true
 
+  datasource:
+    url: jdbc:postgresql://localhost:5432/payments
+    username: postgres
+    password: postgres
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui
