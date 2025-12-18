@@ -3,6 +3,7 @@ package dev.sorokin.paymentsystem.api;
 import dev.sorokin.paymentsystem.api.dto.CreatePaymentRequest;
 import dev.sorokin.paymentsystem.api.dto.PaymentDto;
 import dev.sorokin.paymentsystem.domain.PaymentService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -17,7 +18,7 @@ public class PaymentController {
     }
 
     @PostMapping
-    public PaymentDto create(@RequestBody CreatePaymentRequest request) {
+    public PaymentDto create(@Valid @RequestBody CreatePaymentRequest request) {
         return paymentService.createPayment(request);
     }
 
